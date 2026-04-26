@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Golf Score — Caddy Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1B4332;
+    --green-mid: #2D6A4F;
+    --green-light: #52B788;
+    --green-pale: #D8F3DC;
+    --gold: #D4A017;
+    --gold-light: #F6D860;
+    --sand: #F9F3E3;
+    --sand-dark: #EDE0C4;
+    --ink: #1A1A1A;
+    --ink-mid: #444;
+    --ink-soft: #888;
+    --white: #FFFFFF;
+    --red: #C1121F;
+    --blue: #1565C0;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: 'Noto Sans Thai', sans-serif; background: var(--green); color: var(--ink); overflow: hidden; }
+
+  /* SCREENS */
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s; }
+  .screen.hidden { transform: translateY(40px); opacity: 0; pointer-events: none; }
+
+  /* HEADER */
+  .header {
+    background: var(--green);
+    padding: 20px 20px 16px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .header-logo { font-family: 'Bebas Neue', cursive; font-size: 28px; color: var(--gold-light); letter-spacing: 2px; line-height: 1; }
+  .header-sub { font-size: 11px; color: var(--green-light); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .header-back { background: rgba(255,255,255,0.12); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 4px; flex-shrink: 0; }
+  .header-back svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
+
+  /* CONTENT AREA */
+  .content { flex: 1; overflow-y: auto; overflow-x: hidden; background: var(--sand); border-radius: 24px 24px 0 0; padding: 24px 18px 40px; }
+
+  /* CARDS */
+  .card { background: var(--white); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+  /* BUTTONS */
+  .btn { display: block; width: 100%; padding: 16px; border-radius: var(--radius); border: none; font-family: 'Noto Sans Thai', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.15s, opacity 0.15s; text-align: center; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--green-mid); color: var(--white); }
+  .btn-gold { background: var(--gold); color: var(--white); }
+  .btn-outline { background: transparent; color: var(--green-mid); border: 2px solid var(--green-mid); }
+  .btn-ghost { background: var(--sand); color: var(--ink-mid); }
+  .btn-sm { padding: 10px 16px; font-size: 14px; width: auto; display: inline-block; border-radius: 8px; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn + .btn { margin-top: 10px; }
+
+  /* INPUTS */
+  input, select {
+    width: 100%; padding: 14px 16px; border: 1.5px solid #DDD; border-radius: 10px;
+    font-family: 'Noto Sans Thai', sans-serif; font-size: 16px; background: var(--white);
+    outline: none; transition: border-color 0.2s; color: var(--ink);
+  }
+  input:focus, select:focus { border-color: var(--green-mid); }
+  .input-group { margin-bottom: 14px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--ink-mid); margin-bottom: 6px; display: block; }
+
+  /* ROOM CODE */
+  .room-code-box {
+    background: var(--green);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .room-code { font-family: 'Bebas Neue', cursive; font-size: 56px; color: var(--gold-light); letter-spacing: 8px; line-height: 1; }
+  .room-code-label { font-size: 12px; color: var(--green-light); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+
+  /* PLAYER LIST */
+  .player-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--sand-dark);
+  }
+  .player-row:last-child { border-bottom: none; }
+  .player-avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--green-pale);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: var(--green-mid); flex-shrink: 0;
+  }
+  .player-name { flex: 1; font-size: 15px; font-weight: 500; }
+  .player-score { font-family: 'Bebas Neue', cursive; font-size: 22px; color: var(--green-mid); }
+  .player-hc { font-size: 11px; color: var(--ink-soft); }
+
+  /* SCORECARD TABLE */
+  .scorecard-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+  .scorecard-table { width: 100%; border-collapse: collapse; min-width: 340px; }
+  .scorecard-table th {
+    background: var(--green); color: var(--gold-light);
+    font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px;
+    padding: 8px 6px; text-align: center; position: sticky; top: 0; z-index: 2;
+  }
+  .scorecard-table th:first-child { text-align: left; padding-left: 10px; position: sticky; left: 0; z-index: 3; }
+  .scorecard-table td {
+    padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--sand-dark);
+    font-size: 14px;
+  }
+  .scorecard-table td:first-child {
+    text-align: left; padding-left: 10px; font-weight: 600;
+    background: var(--white); position: sticky; left: 0; z-index: 1;
+    min-width: 90px;
+  }
+  .score-cell { min-width: 32px; position: relative; }
+  .score-eagle { background: #FFF3CD; color: #B8860B; font-weight: 700; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; }
+  .score-birdie { background: #FFC107; color: #fff; font-weight: 700; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; }
+  .score-par { font-weight: 500; }
+  .score-bogey { color: var(--blue); font-weight: 600; }
+  .score-double { color: var(--red); font-weight: 700; }
+  .score-triple { color: var(--red); font-weight: 700; text-decoration: underline; }
+  .total-row td { background: var(--green-pale); font-weight: 700; font-size: 15px; border-top: 2px solid var(--green-light); }
+
+  /* HOLE ENTRY */
+  .hole-header {
+    background: var(--green);
+    text-align: center; padding: 20px;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+  }
+  .hole-number { font-family: 'Bebas Neue', cursive; font-size: 52px; color: var(--gold-light); line-height: 1; }
+  .hole-info { font-size: 13px; color: var(--green-light); margin-top: 4px; }
+  .hole-par-badge { display: inline-block; background: var(--gold); color: #fff; border-radius: 20px; padding: 3px 14px; font-size: 13px; font-weight: 700; margin-top: 6px; }
+
+  .score-stepper { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .stepper-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: none;
+    font-size: 28px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+  }
+  .stepper-btn:active { transform: scale(0.9); }
+  .stepper-minus { background: var(--sand-dark); color: var(--ink-mid); }
+  .stepper-plus { background: var(--green-mid); color: var(--white); }
+  .stepper-value { font-family: 'Bebas Neue', cursive; font-size: 58px; line-height: 1; color: var(--ink); min-width: 80px; text-align: center; }
+  .score-label { font-size: 13px; font-weight: 600; text-align: center; margin-top: 4px; height: 20px; }
+
+  /* STABLEFORD */
+  .stableford-pts { font-size: 13px; color: var(--ink-soft); text-align: center; margin-top: 6px; }
+
+  /* TABS */
+  .tab-bar { display: flex; background: var(--sand-dark); border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 9px; border-radius: 8px; border: none; background: transparent; font-family: 'Noto Sans Thai', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--ink-soft); transition: background 0.2s, color 0.2s; }
+  .tab.active { background: var(--white); color: var(--green-mid); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+
+  /* SEGMENTS */
+  .seg-label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
+
+  /* MODE GRID */
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mode-card {
+    border: 2px solid var(--sand-dark); border-radius: 10px; padding: 14px 10px; text-align: center;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    background: var(--white);
+  }
+  .mode-card.selected { border-color: var(--green-mid); background: var(--green-pale); }
+  .mode-card-icon { font-size: 24px; margin-bottom: 6px; }
+  .mode-card-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .mode-card-desc { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* LEADERBOARD */
+  .lb-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--sand-dark); }
+  .lb-rank { font-family: 'Bebas Neue', cursive; font-size: 24px; width: 28px; text-align: center; color: var(--ink-soft); }
+  .lb-rank.rank-1 { color: var(--gold); }
+  .lb-rank.rank-2 { color: #888; }
+  .lb-rank.rank-3 { color: #CD7F32; }
+  .lb-info { flex: 1; }
+  .lb-name { font-size: 15px; font-weight: 600; }
+  .lb-detail { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .lb-score { font-family: 'Bebas Neue', cursive; font-size: 30px; }
+  .lb-score.under { color: var(--red); }
+  .lb-score.over { color: var(--blue); }
+  .lb-score.even { color: var(--green-mid); }
+
+  /* STATUS DOTS */
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-green { background: var(--green-light); }
+  .dot-gold { background: var(--gold); }
+
+  /* HOLE PROGRESS */
+  .hole-dots { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+  .hdot { width: 24px; height: 24px; border-radius: 50%; background: var(--sand-dark); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); cursor: pointer; transition: background 0.2s; }
+  .hdot.done { background: var(--green-mid); color: #fff; }
+  .hdot.current { background: var(--gold); color: #fff; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; z-index: 9999; transition: transform 0.3s; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* UTILS */
+  .divider { height: 1px; background: var(--sand-dark); margin: 14px 0; }
+  .text-center { text-align: center; }
+  .text-muted { color: var(--ink-soft); font-size: 13px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .row { display: flex; gap: 10px; }
+  .row .input-group { flex: 1; }
+
+  /* LOADING */
+  .loader { display: inline-block; width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SPLASH */
+  #screen-splash { background: var(--green); align-items: center; justify-content: center; z-index: 100; }
+  .splash-logo { font-family: 'Bebas Neue', cursive; font-size: 72px; color: var(--gold-light); letter-spacing: 6px; text-align: center; }
+  .splash-tagline { color: var(--green-light); font-size: 14px; text-align: center; margin-top: 8px; letter-spacing: 1px; }
+  .splash-icon { font-size: 64px; margin-bottom: 16px; text-align: center; }
+
+  /* MATCH PLAY */
+  .vs-bar { display: flex; align-items: center; gap: 0; border-radius: 10px; overflow: hidden; height: 14px; margin: 10px 0; }
+  .vs-seg { height: 100%; transition: flex 0.5s; }
+  .vs-left { background: var(--blue); }
+  .vs-right { background: var(--red); }
+  .vs-mid { background: var(--sand-dark); flex: 1; }
+
+  /* HANDICAP CHIP */
+  .hc-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--sand-dark); border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--ink-mid); }
+
+  /* POPUP OVERLAY */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: flex-end; }
+  .overlay.hidden { display: none; }
+  .popup { background: var(--white); border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .popup-handle { width: 40px; height: 4px; background: var(--sand-dark); border-radius: 2px; margin: 0 auto 20px; }
+
+  /* RESULT SCREEN */
+  .trophy { font-size: 72px; text-align: center; margin: 24px 0 8px; }
+  .winner-name { font-family: 'Bebas Neue', cursive; font-size: 40px; color: var(--green-mid); text-align: center; }
+  .winner-detail { font-size: 14px; color: var(--ink-soft); text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen" id="screen-splash">
+  <div class="splash-icon">⛳</div>
+  <div class="splash-logo">CADDY PRO</div>
+  <div class="splash-tagline">ระบบเก็บคะแนนกอล์ฟอัจฉริยะ</div>
+</div>
+
+<!-- HOME -->
+<div class="screen hidden" id="screen-home">
+  <div class="header">
+    <div>
+      <div class="header-logo">⛳ CADDY PRO</div>
+      <div class="header-sub">Golf Scorecard System</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card text-center" style="background: var(--green); color: #fff; padding: 28px;">
+      <div style="font-size: 36px; margin-bottom: 8px;">🏌️</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--gold-light); letter-spacing:2px;">เริ่มเล่นกอล์ฟ</div>
+      <div style="font-size: 13px; color: var(--green-light); margin-top: 4px;">สร้างหรือเข้าร่วมแมตช์ได้เลย</div>
+    </div>
+    <div class="mt-16">
+      <button class="btn btn-primary" onclick="showScreen('screen-create')">
+        🆕 สร้างแมตช์ใหม่
+      </button>
+      <button class="btn btn-outline mt-8" onclick="showScreen('screen-join')">
+        🔗 เข้าร่วมแมตช์ (มี Room Code)
+      </button>
+      <button class="btn btn-ghost mt-8" onclick="loadSavedMatches()">
+        📋 แมตช์ที่บันทึกไว้
+      </button>
+    </div>
+    <div class="card mt-16">
+      <div class="card-title">รูปแบบการแข่ง</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">🎯</span>
+          <div><div style="font-weight:600;font-size:14px;">Stroke Play</div><div style="font-size:12px;color:var(--ink-soft);">นับรวมทุกหลุม น้อยที่สุดชนะ</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">⭐</span>
+          <div><div style="font-weight:600;font-size:14px;">Stableford</div><div style="font-size:12px;color:var(--ink-soft);">แต้มตามผลเทียบ Par มากที่สุดชนะ</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">⚔️</span>
+          <div><div style="font-weight:600;font-size:14px;">Match Play</div><div style="font-size:12px;color:var(--ink-soft);">แข่งทีละหลุม ชนะกี่หลุมมากกว่า</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MATCH -->
+<div class="screen hidden" id="screen-create">
+  <div class="header">
+    <button class="header-back" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    </button>
+    <div>
+      <div class="header-logo">สร้างแมตช์</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-title">ข้อมูลแมตช์</div>
+      <div class="input-group">
+        <label class="input-label">ชื่อสนาม / แมตช์</label>
+        <input type="text" id="matchName" placeholder="เช่น ABC Golf Club - วันเสาร์">
+      </div>
+      <div class="input-group">
+        <label class="input-label">ชื่อของคุณ (เจ้าของห้อง)</label>
+        <input type="text" id="hostName" placeholder="ชื่อนักกอล์ฟ">
+      </div>
+      <div class="row">
+        <div class="input-group">
+          <label class="input-label">Handicap ของคุณ</label>
+          <input type="number" id="hostHc" placeholder="0" min="0" max="54" value="0">
+        </div>
+        <div class="input-group">
+          <label class="input-label">จำนวนหลุม</label>
+          <select id="holeCount">
+            <option value="9">9 หลุม</option>
+            <option value="18" selected>18 หลุม</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">รูปแบบการแข่ง</div>
+      <div class="mode-grid">
+        <div class="mode-card selected" data-mode="stroke" onclick="selectMode(this,'stroke')">
+          <div class="mode-card-icon">🎯</div>
+          <div class="mode-card-name">Stroke Play</div>
+          <div class="mode-card-desc">นับรวมทุกหลุม</div>
+        </div>
+        <div class="mode-card" data-mode="stableford" onclick="selectMode(this,'stableford')">
+          <div class="mode-card-icon">⭐</div>
+          <div class="mode-card-name">Stableford</div>
+          <div class="mode-card-desc">แต้มต่อ Par</div>
+        </div>
+        <div class="mode-card" data-mode="matchplay" onclick="selectMode(this,'matchplay')">
+          <div class="mode-card-icon">⚔️</div>
+          <div class="mode-card-name">Match Play</div>
+          <div class="mode-card-desc">ชนะทีละหลุม</div>
+        </div>
+        <div class="mode-card" data-mode="skins" onclick="selectMode(this,'skins')">
+          <div class="mode-card-icon">💰</div>
+          <div class="mode-card-name">Skins</div>
+          <div class="mode-card-desc">ชนะเงินรางวัลต่อหลุม</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="parSetupCard">
+      <div class="card-title">ค่า Par แต่ละหลุม</div>
+      <div id="parGrid" style="display:grid; grid-template-columns: repeat(3,1fr); gap:8px;"></div>
+      <div class="text-muted mt-8 text-center" style="font-size:12px;">กดที่หลุมเพื่อเปลี่ยน Par (3/4/5)</div>
+    </div>
+
+    <button class="btn btn-gold" onclick="createMatch()" id="createBtn">
+      ⛳ สร้างแมตช์ & รับ Room Code
+    </button>
+  </div>
+</div>
+
+<!-- JOIN MATCH -->
+<div class="screen hidden" id="screen-join">
+  <div class="header">
+    <button class="header-back" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    </button>
+    <div><div class="header-logo">เข้าร่วมแมตช์</div></div>
+  </div>
+  <div class="content">
+    <div class="card text-center" style="padding:32px 20px;">
+      <div style="font-size:48px; margin-bottom:12px;">🔗</div>
+      <div style="font-size:15px; color:var(--ink-mid); margin-bottom:24px;">กรอก Room Code ที่ได้รับจากเจ้าของห้อง</div>
+      <input type="text" id="joinCode" placeholder="เช่น ABC123" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:4px;text-transform:uppercase;" maxlength="6">
+    </div>
+    <div class="card">
+      <div class="input-group">
+        <label class="input-label">ชื่อของคุณ</label>
+        <input type="text" id="joinName" placeholder="ชื่อนักกอล์ฟ">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Handicap ของคุณ</label>
+        <input type="number" id="joinHc" placeholder="0" min="0" max="54" value="0">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="joinMatch()">เข้าร่วมแมตช์</button>
+  </div>
+</div>
+
+<!-- LOBBY (waiting room) -->
+<div class="screen hidden" id="screen-lobby">
+  <div class="header">
+    <button class="header-back" onclick="leaveMatch()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    </button>
+    <div><div class="header-logo">ห้องรอ</div><div class="header-sub" id="lobbyMatchName"></div></div>
+  </div>
+  <div class="content">
+    <div class="room-code-box">
+      <div class="room-code" id="lobbyRoomCode">——</div>
+      <div class="room-code-label">Room Code — แชร์ให้เพื่อน</div>
+      <button class="btn btn-outline mt-8" style="color:var(--gold-light);border-color:rgba(255,255,255,0.3);font-size:13px;width:auto;padding:8px 20px;" onclick="copyRoomCode()">📋 คัดลอก Code</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ผู้เล่นในห้อง (<span id="playerCount">0</span>)</div>
+      <div id="lobbyPlayers"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:100px;">
+          <div class="text-muted">รูปแบบ</div>
+          <div style="font-weight:600; margin-top:4px;" id="lobbyMode">—</div>
+        </div>
+        <div style="flex:1; min-width:100px;">
+          <div class="text-muted">จำนวนหลุม</div>
+          <div style="font-weight:600; margin-top:4px;" id="lobbyHoles">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="startBtnWrap">
+      <button class="btn btn-gold" onclick="startMatch()" id="startMatchBtn">
+        🏌️ เริ่มแมตช์!
+      </button>
+    </div>
+
+    <div id="waitingMsg" class="text-center text-muted mt-16 hidden">
+      ⏳ รอเจ้าของห้องเริ่มแมตช์...
+    </div>
+  </div>
+</div>
+
+<!-- SCORING -->
+<div class="screen hidden" id="screen-scoring">
+  <div class="header">
+    <button class="header-back" onclick="confirmLeave()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    </button>
+    <div style="flex:1;">
+      <div class="header-logo" id="scoringTitle">หลุมที่ 1</div>
+      <div class="header-sub" id="scoringMatchName"></div>
+    </div>
+    <button style="background:rgba(255,255,255,0.12);border:none;border-radius:8px;padding:8px 12px;color:var(--gold-light);font-size:12px;font-family:'Noto Sans Thai',sans-serif;cursor:pointer;font-weight:600;" onclick="showTab('leaderboard')">
+      🏆 ผล
+    </button>
+  </div>
+  <div style="background:var(--green); flex-shrink:0; padding: 0 18px 16px;">
+    <div class="tab-bar">
+      <button class="tab active" id="tab-score" onclick="showTab('score')">⛳ กรอกคะแนน</button>
+      <button class="tab" id="tab-card" onclick="showTab('card')">📊 Scorecard</button>
+      <button class="tab" id="tab-leaderboard" onclick="showTab('leaderboard')">🏆 ลีดเดอร์</button>
+    </div>
+  </div>
+
+  <!-- TAB: SCORE ENTRY -->
+  <div class="content" id="tabContent-score" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+    <div class="hole-header" id="holeHeaderBg" style="border-radius:0;">
+      <div style="font-size:12px; color:var(--green-light); letter-spacing:1px; text-transform:uppercase;">หลุมที่</div>
+      <div class="hole-number" id="holeNumberDisplay">1</div>
+      <div class="hole-par-badge" id="holeParDisplay">Par 4</div>
+      <div class="hole-info" id="holeInfoDisplay">Handicap Index: —</div>
+    </div>
+    <div style="flex:1; overflow-y:auto; background:var(--sand); padding:16px 18px 40px;">
+      <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;" id="holeNav"></div>
+      <div id="playerScoreList"></div>
+      <div class="mt-16" style="display:flex; gap:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="prevHole()" id="prevBtn">← ก่อนหน้า</button>
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="nextHole()" id="nextBtn">ถัดไป →</button>
+      </div>
+      <div class="mt-16 text-center">
+        <button class="btn btn-danger" onclick="confirmFinish()" id="finishBtn" style="display:none;">🏁 จบแมตช์</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: SCORECARD -->
+  <div class="content hidden" id="tabContent-card">
+    <div class="scorecard-wrap">
+      <table class="scorecard-table" id="scorecardTable"></table>
+    </div>
+  </div>
+
+  <!-- TAB: LEADERBOARD -->
+  <div class="content hidden" id="tabContent-leaderboard">
+    <div id="leaderboardContent"></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen hidden" id="screen-results">
+  <div class="header">
+    <div><div class="header-logo">🏆 ผลการแข่ง</div></div>
+  </div>
+  <div class="content">
+    <div class="trophy" id="resultTrophy">🏆</div>
+    <div class="winner-name" id="resultWinner"></div>
+    <div class="winner-detail" id="resultDetail"></div>
+    <div class="card mt-24" id="resultBoard"></div>
+    <div class="mt-16">
+      <button class="btn btn-primary" onclick="shareResult()">📤 แชร์ผลลัพธ์</button>
+      <button class="btn btn-ghost mt-8" onclick="newMatch()">🏌️ เล่นใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED MATCHES -->
+<div class="screen hidden" id="screen-saved">
+  <div class="header">
+    <button class="header-back" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    </button>
+    <div><div class="header-logo">แมตช์ที่บันทึก</div></div>
+  </div>
+  <div class="content">
+    <div id="savedList"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ STATE ============
+let state = {
+  screen: 'splash',
+  match: null,
+  isHost: false,
+  myPlayerId: null,
+  currentHole: 1,
+  gameMode: 'stroke',
+  syncInterval: null,
+  pendingScores: {}
+};
+
+// ============ SCREEN MANAGEMENT ============
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id)?.classList.remove('hidden');
+  state.screen = id;
+}
+
+function showTab(name) {
+  ['score','card','leaderboard'].forEach(t => {
+    document.getElementById('tabContent-' + t)?.classList.add('hidden');
+    document.getElementById('tab-' + t)?.classList.remove('active');
+  });
+  document.getElementById('tabContent-' + name)?.classList.remove('hidden');
+  document.getElementById('tab-' + name)?.classList.add('active');
+  if (name === 'card') renderScorecard();
+  if (name === 'leaderboard') renderLeaderboard();
+}
+
+// ============ TOAST ============
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ============ STORAGE HELPERS ============
+function saveToStorage(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+function loadFromStorage(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; }
+}
+
+// ============ ROOM CODE GENERATION ============
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+// ============ PAR SETUP ============
+let parValues = {};
+let selectedMode = 'stroke';
+
+function selectMode(el, mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMode = mode;
+}
+
+function buildParGrid() {
+  const n = parseInt(document.getElementById('holeCount').value);
+  const grid = document.getElementById('parGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    if (!parValues[i]) parValues[i] = 4;
+    const btn = document.createElement('button');
+    btn.style.cssText = 'padding:10px 6px;border-radius:8px;border:1.5px solid #DDD;background:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:background 0.15s;';
+    btn.setAttribute('data-hole', i);
+    btn.textContent = `H${i}: Par ${parValues[i]}`;
+    btn.onclick = () => {
+      const pars = [3,4,5];
+      parValues[i] = pars[(pars.indexOf(parValues[i])+1)%3];
+      btn.textContent = `H${i}: Par ${parValues[i]}`;
+      if (parValues[i] === 3) btn.style.borderColor = '#4CAF50';
+      else if (parValues[i] === 5) btn.style.borderColor = '#2196F3';
+      else btn.style.borderColor = '#DDD';
+    };
+    grid.appendChild(btn);
+  }
+}
+
+document.addEventListener('change', e => { if (e.target.id === 'holeCount') buildParGrid(); });
+
+// ============ CREATE MATCH ============
+function createMatch() {
+  const name = document.getElementById('matchName').value.trim();
+  const host = document.getElementById('hostName').value.trim();
+  const hc = parseInt(document.getElementById('hostHc').value) || 0;
+  const holes = parseInt(document.getElementById('holeCount').value);
+  if (!name) { toast('กรุณากรอกชื่อสนาม/แมตช์'); return; }
+  if (!host) { toast('กรุณากรอกชื่อของคุณ'); return; }
+
+  const code = generateCode();
+  const matchId = 'match_' + code;
+  const playerId = 'p_' + Date.now();
+
+  const pars = {};
+  for (let i = 1; i <= holes; i++) pars[i] = parValues[i] || 4;
+
+  const match = {
+    id: matchId,
+    code,
+    name,
+    mode: selectedMode,
+    holes,
+    pars,
+    status: 'lobby',
+    createdAt: Date.now(),
+    hostId: playerId,
+    players: [{
+      id: playerId,
+      name: host,
+      handicap: hc,
+      scores: {},
+      isHost: true
+    }]
+  };
+
+  saveToStorage(matchId, match);
+  saveToStorage('myMatchId', matchId);
+  saveToStorage('myPlayerId', playerId);
+
+  state.match = match;
+  state.isHost = true;
+  state.myPlayerId = playerId;
+  state.gameMode = selectedMode;
+
+  setupLobby();
+  showScreen('screen-lobby');
+}
+
+// ============ JOIN MATCH ============
+function joinMatch() {
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  const name = document.getElementById('joinName').value.trim();
+  const hc = parseInt(document.getElementById('joinHc').value) || 0;
+  if (!code || code.length < 4) { toast('กรอก Room Code ให้ถูกต้อง'); return; }
+  if (!name) { toast('กรุณากรอกชื่อของคุณ'); return; }
+
+  const matchId = 'match_' + code;
+  const match = loadFromStorage(matchId);
+  if (!match) { toast('❌ ไม่พบห้องนี้ — ตรวจสอบ Code อีกครั้ง'); return; }
+  if (match.status === 'finished') { toast('แมตช์นี้จบไปแล้ว'); return; }
+
+  const playerId = 'p_' + Date.now();
+  match.players.push({ id: playerId, name, handicap: hc, scores: {}, isHost: false });
+  saveToStorage(matchId, match);
+  saveToStorage('myMatchId', matchId);
+  saveToStorage('myPlayerId', playerId);
+
+  state.match = match;
+  state.isHost = false;
+  state.myPlayerId = playerId;
+  state.gameMode = match.mode;
+
+  setupLobby();
+  showScreen('screen-lobby');
+}
+
+// ============ LOBBY ============
+function setupLobby() {
+  const m = state.match;
+  document.getElementById('lobbyRoomCode').textContent = m.code;
+  document.getElementById('lobbyMatchName').textContent = m.name;
+  document.getElementById('lobbyMode').textContent = modeLabel(m.mode);
+  document.getElementById('lobbyHoles').textContent = m.holes + ' หลุม';
+
+  if (!state.isHost) {
+    document.getElementById('startBtnWrap').style.display = 'none';
+    document.getElementById('waitingMsg').classList.remove('hidden');
+  }
+
+  refreshLobby();
+  clearInterval(state.syncInterval);
+  state.syncInterval = setInterval(syncLobby, 2000);
+}
+
+function syncLobby() {
+  const matchId = loadFromStorage('myMatchId');
+  const match = loadFromStorage(matchId);
+  if (!match) return;
+  state.match = match;
+  refreshLobby();
+  if (match.status === 'playing' && state.screen === 'screen-lobby') {
+    clearInterval(state.syncInterval);
+    enterScoring();
+  }
+}
+
+function refreshLobby() {
+  const m = state.match;
+  document.getElementById('playerCount').textContent = m.players.length;
+  const container = document.getElementById('lobbyPlayers');
+  container.innerHTML = m.players.map(p => `
+    <div class="player-row">
+      <div class="player-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;">
+        <div class="player-name">${p.name} ${p.isHost ? '👑' : ''}</div>
+        <div class="player-hc">HC: ${p.handicap}</div>
+      </div>
+      <span class="dot dot-green"></span>
+    </div>
+  `).join('');
+}
+
+function copyRoomCode() {
+  const code = state.match?.code;
+  if (!code) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => toast('คัดลอก Code แล้ว: ' + code));
+  } else {
+    toast('Code: ' + code);
+  }
+}
+
+function startMatch() {
+  const match = state.match;
+  if (match.players.length < 1) { toast('ต้องมีผู้เล่นอย่างน้อย 1 คน'); return; }
+  match.status = 'playing';
+  saveToStorage(match.id, match);
+  clearInterval(state.syncInterval);
+  enterScoring();
+}
+
+function leaveMatch() {
+  clearInterval(state.syncInterval);
+  showScreen('screen-home');
+}
+
+// ============ SCORING ============
+function enterScoring() {
+  state.currentHole = 1;
+  document.getElementById('scoringMatchName').textContent = state.match.name;
+  renderScoringScreen();
+  showScreen('screen-scoring');
+  showTab('score');
+  clearInterval(state.syncInterval);
+  state.syncInterval = setInterval(syncScoring, 3000);
+}
+
+function syncScoring() {
+  const matchId = loadFromStorage('myMatchId');
+  const match = loadFromStorage(matchId);
+  if (!match) return;
+  state.match = match;
+  if (state.screen === 'screen-scoring') renderPlayerScores();
+}
+
+function renderScoringScreen() {
+  const m = state.match;
+  const h = state.currentHole;
+  document.getElementById('scoringTitle').textContent = `หลุมที่ ${h}`;
+  document.getElementById('holeNumberDisplay').textContent = h;
+  document.getElementById('holeParDisplay').textContent = `Par ${m.pars[h]}`;
+  document.getElementById('holeInfoDisplay').textContent = `${m.name} · ${modeLabel(m.mode)}`;
+
+  // Hole nav dots
+  const nav = document.getElementById('holeNav');
+  nav.innerHTML = '';
+  for (let i = 1; i <= m.holes; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'hdot' + (i === h ? ' current' : (allPlayersEnteredHole(i) ? ' done' : ''));
+    dot.textContent = i;
+    dot.onclick = () => { state.currentHole = i; renderScoringScreen(); };
+    nav.appendChild(dot);
+  }
+
+  // Prev/Next
+  document.getElementById('prevBtn').disabled = h <= 1;
+  document.getElementById('nextBtn').textContent = h >= m.holes ? '📊 ดู Scorecard' : 'ถัดไป →';
+  document.getElementById('finishBtn').style.display = (state.isHost && h >= m.holes) ? 'block' : 'none';
+
+  renderPlayerScores();
+}
+
+function allPlayersEnteredHole(hole) {
+  return state.match.players.every(p => p.scores[hole] !== undefined && p.scores[hole] !== null);
+}
+
+function renderPlayerScores() {
+  const m = state.match;
+  const h = state.currentHole;
+  const container = document.getElementById('playerScoreList');
+  container.innerHTML = m.players.map(p => {
+    const score = p.scores[h] ?? '';
+    const par = m.pars[h];
+    const diff = score !== '' ? score - par : null;
+    const label = diff !== null ? scoreLabel(diff) : '';
+    const labelColor = diff !== null ? scoreLabelColor(diff) : '';
+    const pts = score !== '' && m.mode === 'stableford' ? stablefordPoints(score, par, p.handicap, h, m.holes) : null;
+    const isMe = p.id === state.myPlayerId;
+
+    return `
+      <div class="card" style="margin-bottom:12px;${isMe ? 'border:2px solid var(--green-mid);' : ''}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div class="player-avatar" style="${isMe ? 'background:var(--green-mid);color:#fff;' : ''}">${p.name.charAt(0).toUpperCase()}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:15px;">${p.name} ${isMe ? '(คุณ)' : ''}</div>
+            <div style="font-size:12px;color:var(--ink-soft);">HC: ${p.handicap} · รวม: ${getTotalScore(p, m)}</div>
+          </div>
+        </div>
+        ${isMe ? `
+        <div class="score-stepper">
+          <button class="stepper-btn stepper-minus" onclick="changeScore('${p.id}', -1)">−</button>
+          <div>
+            <div class="stepper-value" id="sv_${p.id}">${score !== '' ? score : '—'}</div>
+            <div class="score-label" style="color:${labelColor}">${label}</div>
+            ${pts !== null ? `<div class="stableford-pts">⭐ ${pts} แต้ม</div>` : ''}
+          </div>
+          <button class="stepper-btn stepper-plus" onclick="changeScore('${p.id}', 1)">+</button>
+        </div>
+        ` : `
+        <div style="text-align:center; padding:10px 0;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:42px;line-height:1;color:${score !== '' ? scoreLabelColor(diff) : 'var(--ink-soft)'};">${score !== '' ? score : '—'}</div>
+          <div style="font-size:13px;color:${labelColor};font-weight:600;margin-top:4px;">${label}</div>
+          ${pts !== null ? `<div class="stableford-pts">⭐ ${pts} แต้ม</div>` : ''}
+        </div>
+        `}
+      </div>
+    `;
+  }).join('');
+}
+
+function changeScore(playerId, delta) {
+  const m = state.match;
+  const h = state.currentHole;
+  const player = m.players.find(p => p.id === playerId);
+  if (!player) return;
+  const par = m.pars[h];
+  const current = player.scores[h] ?? par;
+  const newScore = Math.max(1, Math.min(20, current + delta));
+  player.scores[h] = newScore;
+  saveToStorage(m.id, m);
+  renderPlayerScores();
+  renderHoleNav();
+}
+
+function renderHoleNav() {
+  const m = state.match;
+  const h = state.currentHole;
+  const nav = document.getElementById('holeNav');
+  if (!nav) return;
+  Array.from(nav.children).forEach((dot, i) => {
+    const hole = i + 1;
+    dot.className = 'hdot' + (hole === h ? ' current' : (allPlayersEnteredHole(hole) ? ' done' : ''));
+  });
+}
+
+function prevHole() {
+  if (state.currentHole > 1) { state.currentHole--; renderScoringScreen(); }
+}
+function nextHole() {
+  if (state.currentHole >= state.match.holes) { showTab('card'); return; }
+  state.currentHole++;
+  renderScoringScreen();
+}
+
+// ============ SCORECARD ============
+function renderScorecard() {
+  const m = state.match;
+  const tbl = document.getElementById('scorecardTable');
+  const front = m.holes >= 9 ? 9 : m.holes;
+  const back = m.holes > 9 ? m.holes - 9 : 0;
+
+  let sections = [{ label: 'Front 9', start: 1, end: Math.min(9, m.holes) }];
+  if (back > 0) sections.push({ label: 'Back 9', start: 10, end: m.holes });
+
+  let html = '';
+  sections.forEach(sec => {
+    const holeNums = Array.from({length: sec.end - sec.start + 1}, (_, i) => sec.start + i);
+    html += `<tr>
+      <th>${sec.label}</th>
+      ${holeNums.map(h => `<th>${h}</th>`).join('')}
+      <th>รวม</th>
+    </tr>
+    <tr>
+      <td style="color:var(--ink-soft);font-size:12px;">Par</td>
+      ${holeNums.map(h => `<td style="color:var(--ink-soft);">${m.pars[h]}</td>`).join('')}
+      <td style="color:var(--ink-soft);">${holeNums.reduce((a,h)=>a+m.pars[h],0)}</td>
+    </tr>`;
+
+    m.players.forEach(p => {
+      const secScores = holeNums.map(h => p.scores[h]);
+      const secTotal = secScores.reduce((a, s) => a + (s || 0), 0);
+      html += `<tr>
+        <td>${p.name}</td>
+        ${holeNums.map((h,i) => {
+          const s = p.scores[h];
+          if (s === undefined || s === null) return '<td>—</td>';
+          const diff = s - m.pars[h];
+          let cls = 'score-par';
+          if (diff <= -2) cls = 'score-eagle';
+          else if (diff === -1) cls = 'score-birdie';
+          else if (diff === 1) cls = 'score-bogey';
+          else if (diff === 2) cls = 'score-double';
+          else if (diff >= 3) cls = 'score-triple';
+          return `<td><span class="${cls}">${s}</span></td>`;
+        }).join('')}
+        <td><strong>${secTotal || '—'}</strong></td>
+      </tr>`;
+    });
+  });
+
+  // Grand total row
+  if (back > 0) {
+    html += `<tr class="total-row">
+      <td>รวม</td>
+      ${Array.from({length: m.holes}, (_, i) => `<td>${m.pars[i+1]}</td>`).join('')}
+      <td>${Array.from({length: m.holes}, (_, i) => m.pars[i+1]).reduce((a,b)=>a+b,0)}</td>
+    </tr>`;
+    m.players.forEach(p => {
+      const total = Array.from({length: m.holes}, (_, i) => p.scores[i+1] || 0).reduce((a,b)=>a+b,0);
+      html += `<tr class="total-row">
+        <td>${p.name}</td>
+        ${Array.from({length: m.holes}, (_, i) => {
+          const s = p.scores[i+1]; return `<td>${s ?? '—'}</td>`;
+        }).join('')}
+        <td>${total || '—'}</td>
+      </tr>`;
+    });
+  }
+
+  tbl.innerHTML = html;
+}
+
+// ============ LEADERBOARD ============
+function renderLeaderboard() {
+  const m = state.match;
+  const container = document.getElementById('leaderboardContent');
+
+  const players = m.players.map(p => {
+    const totalStrokes = Object.values(p.scores).reduce((a,b)=>a+b,0);
+    const totalPar = Object.keys(p.scores).reduce((a,h)=>a+(m.pars[h]||4),0);
+    const stablePoints = m.mode === 'stableford' ?
+      Object.keys(p.scores).reduce((a,h)=>a+stablefordPoints(p.scores[h],m.pars[h],p.handicap,parseInt(h),m.holes),0) : 0;
+    const toPar = totalStrokes - totalPar;
+    const holesPlayed = Object.keys(p.scores).length;
+    return { ...p, totalStrokes, toPar, stablePoints, holesPlayed };
+  });
+
+  let sorted;
+  if (m.mode === 'stableford') {
+    sorted = players.sort((a,b) => b.stablePoints - a.stablePoints);
+  } else {
+    sorted = players.sort((a,b) => (a.totalStrokes||999) - (b.totalStrokes||999));
+  }
+
+  let html = `<div style="font-weight:700;font-size:16px;margin-bottom:12px;color:var(--ink);">${modeLabel(m.mode)} · ${m.holes} หลุม</div>`;
+  sorted.forEach((p, i) => {
+    const rank = i + 1;
+    let scoreDisplay, scoreClass;
+    if (m.mode === 'stableford') {
+      scoreDisplay = p.stablePoints;
+      scoreClass = 'even';
+    } else {
+      scoreDisplay = p.toPar > 0 ? '+' + p.toPar : (p.toPar === 0 ? 'E' : p.toPar);
+      scoreClass = p.toPar < 0 ? 'under' : (p.toPar > 0 ? 'over' : 'even');
+    }
+    html += `
+      <div class="lb-row">
+        <div class="lb-rank ${rank<=3?'rank-'+rank:''}">${rank}</div>
+        <div class="player-avatar" style="font-size:13px;">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="lb-info">
+          <div class="lb-name">${p.name} ${p.id === state.myPlayerId ? '(คุณ)' : ''}</div>
+          <div class="lb-detail">HC: ${p.handicap} · เล่นแล้ว ${p.holesPlayed}/${m.holes} หลุม
+            ${m.mode==='stableford' ? ` · ${p.totalStrokes} ช็อต` : ` · ${p.totalStrokes} ช็อต`}
+          </div>
+        </div>
+        <div class="lb-score ${scoreClass}">${p.holesPlayed > 0 ? scoreDisplay : '—'}</div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// ============ SCORE HELPERS ============
+function stablefordPoints(score, par, hc, holeNum, totalHoles) {
+  if (score === undefined || score === null) return 0;
+  const strokes = par - score + 2;
+  return Math.max(0, strokes);
+}
+
+function getTotalScore(player, match) {
+  const total = Object.values(player.scores).reduce((a,b)=>a+(b||0),0);
+  if (!total) return '—';
+  if (match.mode === 'stableford') {
+    const pts = Object.keys(player.scores).reduce((a,h) =>
+      a + stablefordPoints(player.scores[h], match.pars[h], player.handicap, parseInt(h), match.holes), 0);
+    return pts + ' pts';
+  }
+  const par = Object.keys(player.scores).reduce((a,h)=>a+(match.pars[h]||4),0);
+  const diff = total - par;
+  return diff === 0 ? 'E' : (diff > 0 ? '+'+diff : diff) + '';
+}
+
+function scoreLabel(diff) {
+  if (diff <= -3) return '🦅 Albatross';
+  if (diff === -2) return '🦅 Eagle';
+  if (diff === -1) return '🐦 Birdie';
+  if (diff === 0) return '✅ Par';
+  if (diff === 1) return 'Bogey';
+  if (diff === 2) return 'Double Bogey';
+  if (diff === 3) return 'Triple Bogey';
+  return '+' + diff;
+}
+
+function scoreLabelColor(diff) {
+  if (diff <= -2) return '#B8860B';
+  if (diff === -1) return '#E65100';
+  if (diff === 0) return 'var(--green-mid)';
+  if (diff === 1) return 'var(--blue)';
+  return 'var(--red)';
+}
+
+function modeLabel(mode) {
+  return { stroke: 'Stroke Play', stableford: 'Stableford', matchplay: 'Match Play', skins: 'Skins' }[mode] || mode;
+}
+
+// ============ FINISH ============
+function confirmFinish() {
+  if (confirm('จบแมตช์และดูผลลัพธ์?')) finishMatch();
+}
+function confirmLeave() {
+  if (confirm('ออกจากแมตช์? คะแนนที่กรอกไว้จะถูกบันทึก')) {
+    clearInterval(state.syncInterval);
+    saveCurrentMatch();
+    showScreen('screen-home');
+  }
+}
+
+function finishMatch() {
+  const m = state.match;
+  m.status = 'finished';
+  m.finishedAt = Date.now();
+  saveToStorage(m.id, m);
+
+  // Save to history
+  const history = loadFromStorage('matchHistory') || [];
+  history.unshift({ id: m.id, name: m.name, mode: m.mode, holes: m.holes, date: Date.now() });
+  saveToStorage('matchHistory', history.slice(0, 20));
+
+  showResults();
+}
+
+function showResults() {
+  const m = state.match;
+  const players = m.players.map(p => {
+    const total = Object.values(p.scores).reduce((a,b)=>a+(b||0),0);
+    const par = Object.keys(p.scores).reduce((a,h)=>a+(m.pars[h]||4),0);
+    const pts = Object.keys(p.scores).reduce((a,h) =>
+      a + stablefordPoints(p.scores[h], m.pars[h], p.handicap, parseInt(h), m.holes), 0);
+    return { ...p, total, toPar: total - par, pts };
+  });
+
+  let winner, winDetail;
+  if (m.mode === 'stableford') {
+    players.sort((a,b) => b.pts - a.pts);
+    winner = players[0];
+    winDetail = `⭐ ${winner.pts} Stableford Points`;
+  } else {
+    players.sort((a,b) => a.total - b.total);
+    winner = players[0];
+    const diff = winner.toPar;
+    winDetail = `🏌️ ${winner.total} ช็อต (${diff===0?'E':diff>0?'+'+diff:diff} to Par)`;
+  }
+
+  document.getElementById('resultWinner').textContent = winner.name;
+  document.getElementById('resultDetail').textContent = winDetail;
+
+  let board = `<div class="card-title">ผลการแข่ง</div>`;
+  players.forEach((p, i) => {
+    const rankLabel = ['🥇','🥈','🥉'][i] || `${i+1}.`;
+    const sc = m.mode === 'stableford' ? `${p.pts} pts` :
+      (p.toPar === 0 ? 'E' : p.toPar > 0 ? '+'+p.toPar : p.toPar);
+    board += `<div class="player-row">
+      <span style="font-size:24px;">${rankLabel}</span>
+      <div class="player-avatar">${p.name.charAt(0)}</div>
+      <div style="flex:1;"><div class="player-name">${p.name}</div><div class="player-hc">HC: ${p.handicap}</div></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--green-mid);">${sc}</div>
+    </div>`;
+  });
+  document.getElementById('resultBoard').innerHTML = board;
+  showScreen('screen-results');
+}
+
+function saveCurrentMatch() {
+  if (state.match) saveToStorage(state.match.id, state.match);
+}
+
+function shareResult() {
+  const m = state.match;
+  const text = `⛳ ผลกอล์ฟ ${m.name}\n` +
+    m.players.map(p => {
+      const total = Object.values(p.scores).reduce((a,b)=>a+b,0);
+      return `${p.name}: ${total} ช็อต`;
+    }).join('\n');
+  if (navigator.share) {
+    navigator.share({ title: 'ผลกอล์ฟ', text });
+  } else {
+    navigator.clipboard?.writeText(text).then(() => toast('คัดลอกผลแล้ว!'));
+  }
+}
+
+function newMatch() { showScreen('screen-home'); }
+
+// ============ SAVED MATCHES ============
+function loadSavedMatches() {
+  const history = loadFromStorage('matchHistory') || [];
+  const container = document.getElementById('savedList');
+  if (!history.length) {
+    container.innerHTML = '<div class="text-center text-muted mt-24">ยังไม่มีแมตช์ที่บันทึก</div>';
+  } else {
+    container.innerHTML = history.map(h => {
+      const match = loadFromStorage(h.id);
+      const date = new Date(h.date).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+      return `<div class="card" onclick="resumeMatch('${h.id}')" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">⛳</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:15px;">${h.name}</div>
+            <div style="font-size:12px;color:var(--ink-soft);">${modeLabel(h.mode)} · ${h.holes} หลุม · ${date}</div>
+          </div>
+          <span style="font-size:20px;color:var(--ink-soft);">›</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  showScreen('screen-saved');
+}
+
+function resumeMatch(matchId) {
+  const match = loadFromStorage(matchId);
+  if (!match) { toast('ไม่พบแมตช์นี้'); return; }
+  state.match = match;
+  state.isHost = match.hostId === loadFromStorage('myPlayerId');
+  state.myPlayerId = loadFromStorage('myPlayerId') || match.players[0]?.id;
+  state.gameMode = match.mode;
+  if (match.status === 'finished') {
+    showResults();
+  } else {
+    enterScoring();
+  }
+}
+
+// ============ INIT ============
+window.onload = () => {
+  buildParGrid();
+  document.getElementById('holeCount').addEventListener('change', buildParGrid);
+
+  // Check for active match
+  const matchId = loadFromStorage('myMatchId');
+  const playerId = loadFromStorage('myPlayerId');
+  if (matchId && playerId) {
+    const match = loadFromStorage(matchId);
+    if (match && match.status !== 'finished') {
+      state.match = match;
+      state.myPlayerId = playerId;
+      state.isHost = match.hostId === playerId;
+      state.gameMode = match.mode;
+    }
+  }
+
+  setTimeout(() => showScreen('screen-home'), 1800);
+};
+</script>
+</body>
+</html>
